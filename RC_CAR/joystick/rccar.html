@@ -1,0 +1,98 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>RC-CAR Controller</title>
+    <meta name="viewport" content="width=200, initial-scale=1, maximum-scale=1">
+    <style>
+      body {
+        overflow	: hidden;
+        padding		: 0;
+        margin		: 0;
+      }
+      #joystick {
+        width		: 200px;
+        height		: 200px;
+        overflow	: hidden;
+        padding		: 0;
+        margin		: 0;
+        background-color: #BBB;
+        -webkit-user-select	: none;
+        -moz-user-select	: none;
+      }
+    </style>
+    <script>
+var xmlHttp;
+function createXMLHttpRequest() {
+  //if (window.ActiveXObject) {
+  //  xmlHttp = new ActiveXObject("Microsoft.XMLHTTP");
+  //}
+  //else
+  if (window.XMLHttpRequest) {
+    xmlHttp = new XMLHttpRequest();
+  }
+}
+var ack = 0;
+function motion(action, enableAck) {
+  if (enableAck != true || ack == 0) {
+    createXMLHttpRequest();
+    xmlHttp.open('POST','/rccar',true);
+    xmlHttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xmlHttp.setRequestHeader('Content-Length', action.length);
+    xmlHttp.setRequestHeader('Connection', 'close');
+    xmlHttp.onreadystatechange = motionCallback;
+    ack = 1;
+    xmlHttp.send(action);
+  }
+}
+function motionCallback() {
+  if (xmlHttp.readyState == 4) {
+    if (xmlHttp.status == 200) {
+      ack = 0;
+    }
+  }
+}
+var paused = false;
+var xmlhttp=new XMLHttpRequest();
+function getImage() {
+  xmlhttp.abort();
+  xmlhttp.onload = imageCallback;
+  xmlhttp.open("GET", "/getImage", true);
+  xmlhttp.send();
+  if (!paused) {
+    setTimeout('getImage()',500);
+  }
+}
+function imageCallback() {
+    if (xmlhttp.readyState==4 && xmlhttp.status==200){
+      imageBase64=xmlhttp.responseText;
+      document.getElementById("imageBase64").setAttribute("src","data:image/jpg;base64,"+imageBase64);
+      document.getElementById("imageBase64").onclick=imageOnclick;
+    }
+};
+function imageOnclick() {
+  paused = !paused;
+  if (!paused) getImage();
+}
+</script>
+<script src="/joystick.js"></script>
+<script>
+var joystick;
+window.onload = function() {
+  getImage();
+  //console.log("touchscreen is", Joystick.touchScreenAvailable() ? "available" : "not available");
+  joystick	= new Joystick({
+    container	: document.getElementById('joystick'),
+    mouseSupport	: true
+  });
+}	
+</script>
+</head>
+<body>
+    <img src="#" width=320 height=240 id="imageBase64" />
+    <div id="joystick" ></div>
+    <div id="motion" ></div>
+    <div id="info">
+        <span id="result"></span>
+    </div>
+</body>
+</html>
